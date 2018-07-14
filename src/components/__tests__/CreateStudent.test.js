@@ -2,7 +2,7 @@ import React from 'react';
 import nock from 'nock';
 import axios from 'axios';
 import httpAdapter from 'axios/lib/adapters/http'
-import { configure, shallow, render, mount } from 'enzyme';
+import { configure, shallow, render, mount, wrapper } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
 import sinon from 'sinon';
 
@@ -10,6 +10,14 @@ import CreateStudent from '../../components/CreateStudent';
 
 configure({ adapter: new Adapter() });
 
+beforeEach(() => {
+  nock.disableNetConnect();
+});
+
+afterEach(() => {
+  nock.cleanAll();
+  nock.enableNetConnect();
+});
 it('renders without crashing', () => {
   shallow(<CreateStudent />);
 })
@@ -31,25 +39,30 @@ it('should should have URL and CREATED props', () => {
   expect(wrapper.prop('host')).toEqual('aaa');
   // expect(wrapper.prop('created')).to.be.a('function');
 });
-it('should should call preventDefault when button clicked', () => {
-  const stub = sinon.stub();
-  const wrapper = mount(<CreateStudent />);
-  wrapper.find('button').simulate('click', {preventDefault: stub});
-  expect(stub.callCount).toEqual(1);
+
+it('should call webservice to create student', done => {
+  nock('http://fakehost.com')
+  .post('/students', {email: "sam@aol.com"})
+  .reply(200, {
+    id: 99,
+    email: "sam@aol.com"
+  });
+
+  const created = jest.fn();
+  const wrapper = mount(<CreateStudent host="http://fakehost.com" created={created} />);
+  // wrapper.find('input').get(0).value = "sam@aol.com";
+
+  wrapper.find('button').simulate('click');
+
+  setTimeout(() => {
+    try{
+      const student = jest.fn();
+      // expect(created.mock.calls.length).toEqual(1);
+      expect(student).toEqual({id: 99, email: "sam@aol.com"});
+
+      done();
+    }catch(e){
+      done.fail(e);
+    }
+  }, 1000);
 });
-
-// it('should call webservice to create student', done => {
-//   nock('http://fakehost.com')
-//   .post('/students', {email: "sam@aol.com"})
-//   .reply(200, {
-//     id: 99,
-//     email: "sam@aol.com"
-//   });
-
-//   const created = sinon.stub();
-//   const wrapper = mount(<CreateStudent host="http://fakehost.com" created={created} />);
-//   wrapper.find('input').get(0).value = "sam@aol.com";
-//   wrapper.find('button').simulate('click');
-
-
-// });
