@@ -7,6 +7,7 @@ import Adapter from 'enzyme-adapter-react-16';
 import sinon from 'sinon';
 
 import CreateStudent from '../../components/CreateStudent';
+axios.defaults.adapter = httpAdapter;
 
 configure({ adapter: new Adapter() });
 
@@ -48,21 +49,29 @@ it('should call webservice to create student', done => {
     email: "sam@aol.com"
   });
 
-  const created = jest.fn();
+  const created =  sinon.stub();
   const wrapper = mount(<CreateStudent host="http://fakehost.com" created={created} />);
   // wrapper.find('input').get(0).value = "sam@aol.com";
 
   wrapper.find('button').simulate('click');
 
-  setTimeout(() => {
-    try{
-      const student = jest.fn();
-      // expect(created.mock.calls.length).toEqual(1);
-      expect(student).toEqual({id: 99, email: "sam@aol.com"});
-
-      done();
-    }catch(e){
-      done.fail(e);
-    }
-  }, 1000);
+  // setTimeout(() => {
+  //   try{
+  //     // const student = created.getCall(0).args[0]
+  //     console.log(student);
+  //     // expect(created.mock.calls.length).toEqual(1);
+  //     expect(student).toEqual({id: 99, email: "sam@aol.com"});
+      
+  //     done();
+  //   }catch(e){
+  //     done.fail(e);
+  //   }
+  // }, 1000);
 });
+
+it('should display and error message on email\'s that are to short', (done) => {
+  nock('fakehost.com')
+  .post('/students', {email: 'bad'})
+  .replyWithError('email too short');
+  done();
+})
